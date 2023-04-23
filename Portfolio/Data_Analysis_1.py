@@ -45,5 +45,43 @@ dados_exemplares = pd.read_parquet('https://github.com/FranciscoFoz/7_Days_of_Co
 emprestimos = emprestimos_biblioteca.merge(dados_exemplares)
 
 
+
+# Criando uma nova coluna
+CDU_lista = []
+
+for i in emprestimos.localizacao:
+    if (i < 100):
+        CDU_lista.append("Generalidade. Ciência e Conhecimento")
+    elif(i >= 100 and i < 200):
+        CDU_lista.append("Filosofia e Psicologia")
+    elif(i >= 200 and i < 300):
+        CDU_lista.append("Religião")
+    elif(i >= 300 and i < 400):
+        CDU_lista.append("Ciências Sociais")
+    elif(i >= 400 and i < 500):
+        CDU_lista.append(" - ")
+    elif(i >= 500 and i < 600):
+        CDU_lista.append("Matemática e Ciência Naturais")
+    elif(i >= 600 and i< 700):
+        CDU_lista.append("Ciência Aplicadas")
+    elif(i >= 700 and i < 800):
+        CDU_lista.append("Belas Artes")
+    elif(i >= 800 and i < 900):
+        CDU_lista.append("Linguagem. Lingua. Linguistica")
+    else:
+        CDU_lista.append("Geografia. Biografia. História")
+
+emprestimos["CDU"] = CDU_lista
+
+
+# Excluindo coluna
+emprestimos.drop("registro_sistema", axis = 1, inplace = True)
+
+
+# Mudando tipo de uma coluna
+emprestimos["matricula_ou_siape"] = emprestimos["matricula_ou_siape"].astype(str)
+
+print(emprestimos.dtypes)
+
 # Criando um arquivo .csv com o dataframe final
 #emprestimos.to_csv("Emprestimos.csv", sep = "\t", index = False)
