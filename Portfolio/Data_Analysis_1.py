@@ -1,4 +1,6 @@
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 # Criando uma função para criar as URLs necessárias
@@ -19,12 +21,12 @@ for i in range(0,(len(url_list)-1)):
     dataframe_list.append(data)
 
 # Concatenando todos os dataframes da lista em apenas um único dataset
-emprestimos_biblioteca = pd.concat(dataframe_list, join = 'inner', ignore_index = True)
+df_emprestimos_biblioteca = pd.concat(dataframe_list, join = 'inner', ignore_index = True)
 
 # Verificando a existencia de dados duplicados
-quantidade_antes = emprestimos_biblioteca.shape[0]
-emprestimos_biblioteca = emprestimos_biblioteca.drop_duplicates()
-quantidade_depois = emprestimos_biblioteca.shape[0]
+quantidade_antes = df_emprestimos_biblioteca.shape[0]
+df_emprestimos_biblioteca = df_emprestimos_biblioteca.drop_duplicates()
+quantidade_depois = df_emprestimos_biblioteca.shape[0]
 
 
 if(quantidade_antes == quantidade_depois):
@@ -38,18 +40,18 @@ else:
 
 
 # Criando um novo dataset
-dados_exemplares = pd.read_parquet('https://github.com/FranciscoFoz/7_Days_of_Code_Alura-Python-Pandas/raw/main/Dia_1-Importando_dados/Datasets/dados_exemplares.parquet')
+df_dados_exemplares = pd.read_parquet('https://github.com/FranciscoFoz/7_Days_of_Code_Alura-Python-Pandas/raw/main/Dia_1-Importando_dados/Datasets/dados_exemplares.parquet')
 
 
 # Unindo ambos os datasets
-emprestimos = emprestimos_biblioteca.merge(dados_exemplares)
+df_emprestimos = df_emprestimos_biblioteca.merge(df_dados_exemplares)
 
 
 
 # Criando uma nova coluna
 CDU_lista = []
 
-for i in emprestimos.localizacao:
+for i in df_emprestimos.localizacao:
     if (i < 100):
         CDU_lista.append("Generalidade. Ciência e Conhecimento")
     elif(i >= 100 and i < 200):
@@ -71,17 +73,113 @@ for i in emprestimos.localizacao:
     else:
         CDU_lista.append("Geografia. Biografia. História")
 
-emprestimos["CDU"] = CDU_lista
+df_emprestimos["CDU"] = CDU_lista
 
 
 # Excluindo coluna
-emprestimos.drop("registro_sistema", axis = 1, inplace = True)
+df_emprestimos.drop("registro_sistema", axis = 1, inplace = True)
 
 
 # Mudando tipo de uma coluna
-emprestimos["matricula_ou_siape"] = emprestimos["matricula_ou_siape"].astype(str)
-
-print(emprestimos.dtypes)
+df_emprestimos["matricula_ou_siape"] = df_emprestimos["matricula_ou_siape"].astype(str)
 
 # Criando um arquivo .csv com o dataframe final
-#emprestimos.to_csv("Emprestimos.csv", sep = "\t", index = False)
+#df_emprestimos.to_csv("Emprestimos.csv", sep = "\t", index = False)
+
+
+
+
+
+
+# Respondendo algumas perguntas
+
+# 1. Quantidade total de exemplares emprestados
+df_emprestimos["id_emprestimo"].value_counts() # o mesmo id_emprestimos aparece mais de uma vez
+df_emprestimos.loc[df_emprestimos["id_emprestimo"] == 2422542] # cada linha em que o mesmo id_emprestimo aparece é um exemplar diferente emprestado 
+
+qtd_exemplares_emprestados = len(df_emprestimos["id_emprestimo"].index) # A quantidade de exemplares emprestados é a quantidade de linhas do dataframe
+
+# 2. Quantidade total de emprestimos realizados
+qtd_emprestimos_realizados = len(df_emprestimos["id_emprestimo"].drop_duplicates().index)
+
+# 3. Quantidade total de exemplares emprestados por ano
+df_emprestimos.dtypes # datas não estao no tipo data, necessita transformação
+df_emprestimos.loc[:, ["data_renovacao", "data_emprestimo", "data_devolucao"]] = df_emprestimos.loc[:, ["data_renovacao", "data_emprestimo", "data_devolucao"]].apply(pd.to_datetime)
+
+
+# Criando um dataframe apenas da quantidade de exemplares emprestados pelo ano de emprestimo
+#df_exemplares_emprestados= df_emprestimos[["data_emprestimo"]]
+#df_exemplares_emprestados= df_exemplares_emprestados.value_counts()
+#df_exemplares_emprestados= df_exemplares_emprestados.to_frame().reset_index()
+#df_exemplares_emprestados.columns = ["data", "quantidade"]
+#df_exemplares_emprestados_ano = df_exemplares_emprestados.groupby(by = df_exemplares_emprestados.data.dt.year).sum()
+
+
+df_exemplares_emprestados_ano = df_emprestimos.loc[:, "data_emprestimo"].dt.year.value_counts().to_frame()
+df_exemplares_emprestados_ano.columns = ["Quantidade"]
+df_exemplares_emprestados_ano.index.name = "Ano"
+
+# Gráfico
+#sns.lineplot(data = df_exemplares_emprestados_ano, x = "Ano", y = "Quantidade")
+#plt.title("Quantidade de Exemplares Emprestados ao Longo dos Anos")
+#plt.grid()
+#plt.show()
+
+
+# 4. Quantidade total de exemplares emprestados de acordoo com os meses do ano
+#df_exemplares_emprestados= df_emprestimos[["data_emprestimo"]]
+#df_exemplares_emprestados= df_exemplares_emprestados.value_counts()
+#df_exemplares_emprestados= df_exemplares_emprestados.to_frame().reset_index()
+#df_exemplares_emprestados.columns = ["data", "quantidade"]
+#df_exemplares_emprestados_mes = df_exemplares_emprestados.groupby(by = df_exemplares_emprestados.data.dt.month).sum()
+#df_exemplares_emprestados_mes = df_exemplares_emprestados_mes.sort_index(ascending = True)
+
+
+df_exemplares_emprestados_mes = df_emprestimos.loc[:, "data_emprestimo"].dt.month.value_counts().to_frame()
+df_exemplares_emprestados_mes.columns = ["Quantidade"]
+df_exemplares_emprestados_mes.index.name = "Meses"
+df_exemplares_emprestados_mes = df_exemplares_emprestados_mes.sort_index(ascending = True)
+
+meses_do_ano = {
+    1: "Janeiro",
+    2: "Fevereiro",
+    3: "Março",
+    4:  "Abril",
+    5: "Maio",
+    6: "Junho",
+    7: "Julho",
+    8: "Agosto",
+    9: "Setembro",
+    10: "Outubro",
+    11: "Novembro",
+    12: "Dezembro"
+}
+
+df_exemplares_emprestados_mes.index = df_exemplares_emprestados_mes.index.map(meses_do_ano)
+
+
+#Gráfico
+#sns.lineplot(data = df_exemplares_emprestados_mes, x = "Meses", y = "Quantidade")
+#plt.title("Quantidade de Exemplares Emprestados ao Longo dos Meses do Ano")
+#plt.grid()
+#plt.show()
+
+# 5. Quantidade total de exemplares emprestados de acordo com as horas do dia
+#df_exemplares_emprestados= df_emprestimos[["data_emprestimo"]]
+#df_exemplares_emprestados= df_exemplares_emprestados.value_counts()
+#df_exemplares_emprestados= df_exemplares_emprestados.to_frame().reset_index()
+#df_exemplares_emprestados.columns = ["data", "quantidade"]
+#df_exemplares_emprestados_hora = df_exemplares_emprestados.groupby(by = df_exemplares_emprestados.data.dt.hour).sum()
+#df_exemplares_emprestados_hora = df_exemplares_emprestados_hora.reset_index()
+#df_exemplares_emprestados_hora.columns = ["Hora","Quantidade"]
+#df_exemplares_emprestados_hora = df_exemplares_emprestados_hora.sort_index(ascending = True)
+
+
+df_exemplares_emprestados_hora = df_emprestimos.loc[:, "data_emprestimo"].dt.hour.value_counts().to_frame().reset_index()
+df_exemplares_emprestados_hora.columns = ["Hora","Quantidade"]
+df_exemplares_emprestados_hora = df_exemplares_emprestados_hora.sort_index(ascending = True)
+
+#sns.barplot(data = df_exemplares_emprestados_hora, x = "Hora", y = "Quantidade")
+#plt.title("Quantidade de Exemplares Emprestados ao Longo das Horas do Dia")
+#plt.grid()
+#plt.show()
