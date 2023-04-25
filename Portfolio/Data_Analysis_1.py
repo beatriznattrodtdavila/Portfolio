@@ -183,3 +183,25 @@ df_exemplares_emprestados_hora = df_exemplares_emprestados_hora.sort_index(ascen
 #plt.title("Quantidade de Exemplares Emprestados ao Longo das Horas do Dia")
 #plt.grid()
 #plt.show()
+
+
+
+# 6. Análisando variaveis qualitativas
+
+def unico_valores_var_quali(variavel):
+    unicos_elementos = df_emprestimos[variavel].unique()
+    dataset = pd.DataFrame(unicos_elementos)
+    dataset.columns = [variavel]
+    print("Os valores únicos de {} são:".format(variavel))
+    print(dataset)
+
+
+def frequencia_emprestimo(variavel):
+
+    dataset = pd.DataFrame(df_emprestimos[variavel].value_counts())
+    dataset.columns = ["Quantidade"]
+    dataset.index.name = variavel
+    dataset["Percentual"] = ((df_emprestimos[variavel].value_counts() / qtd_exemplares_emprestados) * 100).round(2)
+    print(dataset)
+
+frequencia_emprestimo("tipo_vinculo_usuario")
