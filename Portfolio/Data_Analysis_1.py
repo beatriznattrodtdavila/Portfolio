@@ -31,7 +31,7 @@ quantidade_depois = df_emprestimos_biblioteca.shape[0]
 
 if(quantidade_antes == quantidade_depois):
     print("Não há dados duplicados no nosso dataset")
-    print("Temos: " + str(quantidade_antes.shape[0]) + "dados no nosso dataset")
+    print("Temos: " + str(quantidade_antes) + " dados no nosso dataset")
 else:
     print("Há dados duplicados no nosso dataset e eles foram excluidos\n")
     print("Dados anteriores: " + str(quantidade_antes) + ".\nDados após exclusão: " + str(quantidade_depois) + ".\n")
@@ -204,4 +204,110 @@ def frequencia_emprestimo(variavel):
     dataset["Percentual"] = ((df_emprestimos[variavel].value_counts() / qtd_exemplares_emprestados) * 100).round(2)
     print(dataset)
 
-frequencia_emprestimo("tipo_vinculo_usuario")
+# 7. Coleção com Maior Frequencia para Cada Tipo de Usuario
+
+def freq_colec_tipo_usuario(variavel, variavel2): 
+    df_emprestimos_tipo_usuario = df_emprestimos.query("tipo_vinculo_usuario == @variavel")
+    df_emprestimo_tipo_usuario_2 = df_emprestimos_tipo_usuario[variavel2].value_counts()
+    maiorfreq = df_emprestimo_tipo_usuario_2.index[0]
+    df_emprestimo_tipo_usuario_3 = df_emprestimos_tipo_usuario.query(variavel2 +' == @maiorfreq')
+    df_emprestimo_tipo_usuario_3['ano'] = df_emprestimo_tipo_usuario_3["data_emprestimo"].dt.year
+    df_emprestimo_tipo_usuario_3['mes'] = df_emprestimo_tipo_usuario_3["data_emprestimo"].dt.month
+    df_emprestimo_tipo_usuario_3 = df_emprestimo_tipo_usuario_3.loc[:,['ano', 'mes']]
+    df_emprestimo_tipo_usuario_3 = df_emprestimo_tipo_usuario_3.value_counts().to_frame('quantidade').reset_index()
+    print(df_emprestimo_tipo_usuario_3)
+
+    sns.set_theme(style="darkgrid", palette='Blues',font_scale=1.3)                    
+    plt.figure(figsize=(16,10))                                                           
+
+    ax = sns.boxplot(y= 'quantidade', x= 'ano', data= df_emprestimo_tipo_usuario_3)   
+    #plt.show()                                                  
+
+
+
+
+# Novos Dados para Análise
+
+# Alunos Graduação - Excel
+
+alunos_grad_antes_2010 = pd.read_excel('https://github.com/FranciscoFoz/7_Days_of_Code_Alura-Python-Pandas/raw/main/Dia_6-Novos_dados_novas_analises/Datasets/matricula_alunos.xlsx', sheet_name='Até 2010',skiprows=1)
+alunos_grad_depois_2010 = pd.read_excel('https://github.com/FranciscoFoz/7_Days_of_Code_Alura-Python-Pandas/raw/main/Dia_6-Novos_dados_novas_analises/Datasets/matricula_alunos.xlsx',sheet_name='Após 2010',skiprows=1)
+
+
+alunos_grad_antes_2010.columns = ['matricula_ou_siape', 'tipo_vinculo_usuario', 'curso']
+alunos_grad_depois_2010.columns = ['matricula_ou_siape', 'tipo_vinculo_usuario', 'curso']
+
+alunos_grad_excel = pd.concat([alunos_grad_antes_2010, alunos_grad_depois_2010], ignore_index = True)
+
+tipo_dados_alunos_grad_excel = alunos_grad_excel.dtypes
+alunos_grad_excel['matricula_ou_siape'] = alunos_grad_excel['matricula_ou_siape'].astype(str)
+tipo_dados_alunos_grad_excel = alunos_grad_excel.dtypes
+
+
+# Alunos Graduação = JSON
+
+arquivo_alunos_json = "https://raw.githubusercontent.com/FranciscoFoz/7_Days_of_Code_Alura-Python-Pandas/main/Dia_6-Novos_dados_novas_analises/Datasets/cadastro_alunos.json"
+
+alunos_json = pd.read_json(arquivo_alunos_json)
+alunos_grad_json = pd.read_json(alunos_json.registros[0]) # registros[0] - graduacao  registros[1] - pos graduacao
+
+tipo_dados_alunos_grad_json = alunos_grad_json.dtypes
+alunos_grad_json.matricula_ou_siape = alunos_grad_json.matricula_ou_siape.astype('float')
+alunos_grad_json['matricula_ou_siape'] = alunos_grad_json['matricula_ou_siape'].astype(str)
+tipo_dados_alunos_grad_json = alunos_grad_json.dtypes
+
+
+# Alunos Graduação
+
+alunos_grad = pd.concat([alunos_grad_excel, alunos_grad_json],ignore_index = True)
+
+
+# Checando nulos
+alunos_grad_nulos = alunos_grad.isnull().sum()
+
+# Verificando a existencia de dados duplicados
+alunos_grad_quantidade_antes = alunos_grad.shape[0]
+alunos_grad = alunos_grad.drop_duplicates()
+alunos_grad_quantidade_depois = alunos_grad.shape[0]
+
+
+if(alunos_grad_quantidade_antes == alunos_grad_quantidade_depois):
+    print("Não há dados duplicados no nosso dataset")
+    print("Temos: " + str(alunos_grad_quantidade_antes) + " dados no nosso dataset")
+else:
+    print("Há dados duplicados no nosso dataset e eles foram excluidos\n")
+    print("Dados anteriores: " + str(alunos_grad_quantidade_antes) + ".\nDados após exclusão: " + str(alunos_grad_quantidade_depois) + ".\n")
+    print("Diferença do número de dados após a exclusão de duplicatas: " + str(alunos_grad_quantidade_antes - alunos_grad_quantidade_depois))
+
+# Filtrando pelo cursos = Biblioreconomia, Ciencias Sociais, Comunicação Social, Direito, Filosofia, Pedagogia
+lista_cursos = ['BIBLIOTECONOMIA','CIÊNCIAS SOCIAIS','COMUNICAÇÃO SOCIAL','DIREITO','FILOSOFIA','PEDAGOGIA']
+alunos_grad_cursos_selecionados = alunos_grad.query("curso == @lista_cursos")
+
+
+# Filtrando emprestimos pelo tipo de aluno e data do emprestimo e verificando valores nulos
+emprestimos_grad_2015_em_diante = df_emprestimos.query("tipo_vinculo_usuario == 'ALUNO DE GRADUAÇÃO' & data_emprestimo > 2015").reset_index(drop = True)
+emprestimos_grad_2015_em_diante = emprestimos_grad_2015_em_diante.loc[:,["matricula_ou_siape", "data_emprestimo"]]
+emprestimos_grad_2015_em_diante["data_emprestimo"] = emprestimos_grad_2015_em_diante["data_emprestimo"].dt.year
+
+
+
+emprestimos_grad_2015_em_diante_nulos = emprestimos_grad_2015_em_diante.isna().sum()
+
+# Juntando Nossos Dados
+
+alunos_grad_emprestimo_cursos_selecionados = pd.merge(emprestimos_grad_2015_em_diante, alunos_grad_cursos_selecionados, on = "matricula_ou_siape", how = 'inner')
+
+
+emprestimos_cursos_selecionados = alunos_grad_emprestimo_cursos_selecionados.iloc[:,[1,3]].value_counts().reset_index()
+emprestimos_cursos_selecionados.columns = ['ANO','CURSO','QUANTIDADE_EMPRESTIMOS']
+
+
+emprestimos_cursos_selecionados_pivot = emprestimos_cursos_selecionados.pivot_table(
+        index = 'CURSO',
+        columns = 'ANO',
+        values = 'QUANTIDADE_EMPRESTIMOS',
+        fill_value = '-',
+        aggfunc= sum,
+        margins = True,
+        margins_name = 'TOTAL',
+)
