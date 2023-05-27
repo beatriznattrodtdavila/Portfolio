@@ -8,3 +8,5 @@ jacobi.py: Jacobi Method to solve system of linear equations
 Triangulacao.py: Method to solve system of linear equations
 Triangulacao_Superior: Method to solve system of linear equations
 Newton_method: Method to solve system of linear equations
+Regra_trapezio: Trapezium Rule
+Simpson1_3: Simpson Method
